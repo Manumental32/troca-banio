@@ -1,0 +1,3 @@
+const char* ssid     = "Aquinowifi";
+const char* password = "Nieto1234";
+const char* host = "troca-banio.herokuapp.com";
