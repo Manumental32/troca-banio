@@ -1,13 +1,11 @@
-/*
- *  This sketch shows the WiFi event usage
- *
- */
-
 #include <ESP8266WiFi.h>
 
-const char* ssid     = "Aquinowifi";
+const char* ssid     = "";
 const char* password = "";
 const char* host = "troca-banio.herokuapp.com";
+
+int lightLimit = 500; //mas grande mas oscuro
+boolean aux;
 
 void WiFiEvent(WiFiEvent_t event) {
     Serial.printf("[WiFi-event] event: %d\n", event);
@@ -25,52 +23,42 @@ void WiFiEvent(WiFiEvent_t event) {
 }
 
 void setup() {
-    Serial.begin(115200);
-
-    // delete old config
-    WiFi.disconnect(true);
-
+    Serial.begin(9600); //Serial.begin(115200);
+    WiFi.disconnect(true);// delete old config
     delay(1000);
 
     WiFi.onEvent(WiFiEvent);
-
     WiFi.begin(ssid, password);
-    
-
-    Serial.println();
     Serial.println();
     Serial.println("Wait for WiFi... ");
+    
+    Serial.print("connecting to ");
+    Serial.println(host);
+  
 }
-
-String request_method = "GET ";
 
 void loop() {
   delay(5000);
-
-  Serial.print("connecting to ");
-  Serial.println(host);
-  
-  // Use WiFiClient class to create TCP connections
+    
   WiFiClient client;
   const int httpPort = 80;
   if (!client.connect(host, httpPort)) {
     Serial.println("connection failed");
     return;
   }
-  
-  // We now create a URI for the request
-  //String url = "/servicios/aprendiendoarduino/";
-  request_method = (request_method == "GET ") ? "POST " : "GET ";
-  String url = "/";
-//  url += streamId;
-//  url += "?private_key=";
-//  url += privateKey;
-  
+    
+  int analogValue = analogRead(0);
+  Serial.println(analogValue);
+  //aux = isLightOn(analogValue);
+  //Serial.println(aux);
+  delay(1000);
+
+  String url = "/ldr/";
+  url = url + String(analogValue);
   Serial.print("Requesting URL: ");
   Serial.println(url);
   
-  // This will send the request to the server
-  client.print( request_method + url + " HTTP/1.1\r\n" +
+  client.print( "POST " + url + " HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" + 
                "Connection: close\r\n\r\n");
   unsigned long timeout = millis();
@@ -85,9 +73,14 @@ void loop() {
   // Read all the lines of the reply from server and print them to Serial
   while(client.available()){
     String line = client.readStringUntil('\r');
-    Serial.print(line);
+    Serial.println(line);
   }
   
-  Serial.println();
   Serial.println("closing connection");
+  
+}
+
+
+boolean isLightOn(int value) {
+  return (value < lightLimit);
 }
